@@ -1,9 +1,12 @@
+"""Crawler module
+"""
 import requests
 import os
 from bs4 import BeautifulSoup
 
 
 class PikabuCrawler:
+    """This class represents crawler for pikabu.ru"""
     HEADERS = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/80.0.3987.132 YaBrowser/20.3.1.197 Yowser/2.5 Safari/537.36"
@@ -13,16 +16,28 @@ class PikabuCrawler:
     DATE_RANGE = range(3000, 4200, 1)
     PATH = "../../data/"
 
-    def __init__(self, post_type="text", filename="pikabu.csv"):
+    def __init__(self, post_type="text", filename="pikabu.csv", verbose=True):
+        """The constructor
+        @:param post_type: string
+        @:param filename: string
+        @:param verbose: boolean
+        """
         self.url = f"https://pikabu.ru/search?n={self.POST_TYPES[post_type]}&r=3" + "&d={}&D={}&page={}"
         self.dataset = set()
         self.output_file = open(self.PATH + filename, 'w', encoding='utf-8')
+        self.verbose = verbose
 
     def download(self, pages=10):
+        """Download method
+
+        Downloads 10 pages of content by default
+        @:param pages: int
+        """
         article_counter = 0
         for date_range in self.DATE_RANGE:
             for i in range(pages):
-                print(f"Date: {date_range}\tPage: {i}\tArticles loaded: {article_counter}")
+                if self.verbose:
+                    print(f"Date: {date_range}\tPage: {i}\tArticles loaded: {article_counter}")
                 response = requests.get(self.url.format(date_range, date_range, i + 1), headers=self.HEADERS)
                 soup = BeautifulSoup(response.text, "lxml")
                 articles = soup.findChildren("article")
@@ -61,8 +76,9 @@ class PikabuCrawler:
 
     @staticmethod
     def __get(article, tag, args):
+
         try:
             title = article.find(tag, args).text
-            return title.strip().replace('\n', '')
+            return title.strip().replace('\n', '').replace('\t', ' ')
         except AttributeError:
             return None
